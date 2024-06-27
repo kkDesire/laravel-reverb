@@ -1,16 +1,37 @@
 <?php
 
+use App\Events\MessageReceived;
+use App\Events\HelloWorld;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
+    HelloWorld::dispatch();
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
+    ]);
+});
+
+Route::post('/messages', function () {
+    $payload = request()->validate([
+        "message" => "required",
+        "id" => "required"
+    ]);
+
+    MessageReceived::dispatch($payload['message'], $payload['id']);
+    return response()->json([
+        "message" => "message received!"
+    ]);
+});
+
+Route::get('/visit-count', function () {
+    return Inertia::render("VisitCount", [
+        "user" => auth()->user()
     ]);
 });
 
@@ -24,4 +45,4 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
